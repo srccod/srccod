@@ -8,7 +8,7 @@ import {
 
 const blackJackText1 = `# Black Jack
 
-Black Jack, anyone? 
+Black Jack, anyone?
 
 We'll build a simplified version of the classic card game: one player versus the dealer, no splitting, no insurance bets.
 
@@ -70,7 +70,9 @@ Finally, it's time to implement the main game loop in \`blackjack.py\`. This fun
 Take it step by step, testing each part as you go. Good luck!
 `;
 
-const blackjack_py = `import random, sys
+const blackjack_py = `import random
+from cards import displayHands, getDeck
+from utils import getHandValue, getBet, getMove
 
 def main():
   print('''Blackjack, anyone?
@@ -91,9 +93,7 @@ def main():
   ''')
 `;
 
-const utils_py = `import sys
-
-def getHandValue(cards):
+const utils_py = `def getHandValue(cards):
     """Returns the value of the cards. Face cards are worth 10, aces are
     worth 11 or 1 (this function picks the most suitable ace value)."""
     pass
