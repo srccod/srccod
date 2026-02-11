@@ -33,7 +33,9 @@ app.get("/", async (c) => {
       slug: schema.modules.slug,
       name: schema.modules.name,
     })
-    .from(schema.modules);
+    .from(schema.modules)
+    .where(eq(schema.modules.visible, true))
+    .orderBy(schema.modules.name);
   return c.json(modules);
 });
 
@@ -59,14 +61,14 @@ app.get("/:slug", async (c) => {
     .from(schema.starterFiles)
     .innerJoin(
       schema.moduleToFile,
-      eq(schema.starterFiles.id, schema.moduleToFile.fileId)
+      eq(schema.starterFiles.id, schema.moduleToFile.fileId),
     )
     .leftJoin(
       schema.userFiles,
       and(
         eq(schema.starterFiles.id, schema.userFiles.fileId),
-        eq(schema.userFiles.userId, user?.id || "")
-      )
+        eq(schema.userFiles.userId, user?.id || ""),
+      ),
     )
     .where(eq(schema.moduleToFile.moduleId, module.id));
 

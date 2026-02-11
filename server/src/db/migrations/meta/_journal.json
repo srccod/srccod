@@ -8,6 +8,13 @@
       "when": 1760252266583,
       "tag": "0000_init-auth-and-module-schemas",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770811747137,
+      "tag": "0001_past_the_hood",
+      "breakpoints": true
     }
   ]
 }

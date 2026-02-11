@@ -22,6 +22,7 @@ export const modules = modulesSchema.table("modules", {
     .$type<Instruction[]>()
     .notNull()
     .default(sql`'[]'::jsonb`),
+  visible: boolean("visible").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -48,7 +49,7 @@ export const userFiles = modulesSchema.table(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => [primaryKey({ columns: [table.userId, table.fileId] })]
+  (table) => [primaryKey({ columns: [table.userId, table.fileId] })],
 );
 
 export const moduleToFile = modulesSchema.table(
@@ -64,7 +65,7 @@ export const moduleToFile = modulesSchema.table(
     isEntryPoint: boolean("is_entry_point").notNull().default(false),
     isActive: boolean("is_active").notNull().default(false),
   },
-  (table) => [primaryKey({ columns: [table.moduleId, table.fileId] })]
+  (table) => [primaryKey({ columns: [table.moduleId, table.fileId] })],
 );
 
 export const userModules = modulesSchema.table("user_modules", {

@@ -1,0 +1,1 @@
+ALTER TABLE "modules"."modules" ADD COLUMN "visible" boolean DEFAULT false NOT NULL;
