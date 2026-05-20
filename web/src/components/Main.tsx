@@ -31,6 +31,7 @@ export default function Main() {
     setPyodideStream,
     isAwaitingInput,
     sendInput,
+    filesUpdated,
     executePython,
     sendInterrupt,
   } = usePyodide();
@@ -96,6 +97,30 @@ export default function Main() {
     }
   });
 
+  // merge files pushed from the worker during interactive execution
+  createEffect(() => {
+    const incoming = filesUpdated();
+    if (!incoming) return;
+    setFiles((prev) => {
+      const updated = [...prev];
+      for (const f of incoming) {
+        const idx = updated.findIndex((pf) => pf.name === f.name);
+        if (idx >= 0) {
+          updated[idx] = { ...updated[idx], content: f.content };
+        } else {
+          updated.push({
+            id: crypto.randomUUID(),
+            name: f.name,
+            content: f.content,
+            isEntryPoint: false,
+            sortOrder: updated.length,
+          });
+        }
+      }
+      return updated;
+    });
+  });
+
   // source for the resource: the slug from params
   const moduleSlug = () => params.slug || "default";
 
@@ -122,7 +147,27 @@ export default function Main() {
       return;
     }
     try {
-      await executePython(files(), activeFile());
+      const result = await executePython(files(), activeFile());
+      if (result?.files) {
+        setFiles((prev) => {
+          const updated = [...prev];
+          for (const f of result.files) {
+            const idx = updated.findIndex((pf) => pf.name === f.name);
+            if (idx >= 0) {
+              updated[idx] = { ...updated[idx], content: f.content };
+            } else {
+              updated.push({
+                id: crypto.randomUUID(),
+                name: f.name,
+                content: f.content,
+                isEntryPoint: false,
+                sortOrder: updated.length,
+              });
+            }
+          }
+          return updated;
+        });
+      }
     } catch (err) {
       console.error("Python execution failed:", err);
     }

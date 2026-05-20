@@ -31,9 +31,37 @@ function initSharedMem(inputSab: SharedArrayBuffer, outSab: SharedArrayBuffer) {
   Atomics.store(outputControl, 2, 0); // position = 0
 }
 
+function snapshotFS() {
+  if (!pyodide) return;
+  const files: { name: string; content: string }[] = [];
+  try {
+    const entries: string[] = pyodide.FS.readdir(".");
+    for (const filename of entries) {
+      if (filename === "." || filename === "..") continue;
+      try {
+        const bytes = pyodide.FS.readFile(filename);
+        files.push({ name: filename, content: new TextDecoder().decode(bytes) });
+      } catch {
+        // skip directories or files that can't be read as text
+      }
+    }
+  } catch {
+    // skip if directory can't be read
+  }
+  return files;
+}
+
 function stdinSync() {
   if (!sharedMem || !control) {
     throw new Error("Shared memory not initialized in pyodide worker.");
+  }
+
+  // Snapshot the virtual FS at the start of each stdin read.
+  // By now Python has finished processing the previous input
+  // (e.g. writing files), so anything it created is captured here.
+  const prevFiles = snapshotFS();
+  if (prevFiles && prevFiles.length > 0) {
+    self.postMessage({ type: "files-updated", payload: { files: prevFiles } });
   }
 
   let flag = Atomics.load(control, 0);
@@ -186,9 +214,11 @@ self.onmessage = async (event: MessageEvent) => {
 
       globals.destroy();
 
+      const snapshot = snapshotFS();
       self.postMessage({
         id,
         type: "execute-success",
+        payload: { files: snapshot || [] },
       });
     } catch (error) {
       console.error("Python execution error:", error);

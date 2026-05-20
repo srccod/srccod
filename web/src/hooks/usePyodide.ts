@@ -7,7 +7,7 @@ import PyodideWorker from "../workers/pyodide.worker.ts?worker";
 type WorkerMessage = {
   id: string;
   type: string;
-  payload?: unknown;
+  payload?: { files?: { name: string; content: string }[] };
   output?: string;
   error?: string;
   returnValue?: string;
@@ -61,6 +61,7 @@ export function usePyodide() {
   const [pyodideError, setPyodideError] = createSignal<string | null>(null);
   const [isExecuting, setIsExecuting] = createSignal(false);
   const [isAwaitingInput, setIsAwaitingInput] = createSignal(false);
+  const [filesUpdated, setFilesUpdated] = createSignal<{ name: string; content: string }[] | null>(null);
 
   let worker: Worker | undefined;
   let sharedMem: SharedArrayBuffer | undefined;
@@ -143,7 +144,7 @@ export function usePyodide() {
         setPyodideError(null);
         const execPromise = pendingPromises.get(id);
         if (execPromise) {
-          execPromise.resolve(true);
+          execPromise.resolve(event.data.payload);
           pendingPromises.delete(id);
         }
         return;
@@ -157,6 +158,13 @@ export function usePyodide() {
         if (execErrorPromise) {
           execErrorPromise.reject(error);
           pendingPromises.delete(id);
+        }
+        return;
+      }
+      if (type === "files-updated") {
+        const files = event.data.payload?.files;
+        if (files) {
+          setFilesUpdated(files);
         }
         return;
       }
@@ -205,7 +213,7 @@ export function usePyodide() {
   const executePython = (
     files: { name: string; content: string }[],
     entrypoint: string
-  ): Promise<void> => {
+  ): Promise<{ files: { name: string; content: string }[] } | undefined> => {
     if (!worker || isPyodideLoading()) {
       setPyodideError("Pyodide is not ready yet.");
       return Promise.reject("Pyodide is not ready yet.");
@@ -218,7 +226,7 @@ export function usePyodide() {
 
     const id = generateID();
 
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<{ files: { name: string; content: string }[] } | undefined>((resolve, reject) => {
       pendingPromises.set(id, {
         resolve: resolve as (value?: unknown) => void,
         reject: reject as (reason?: unknown) => void,
@@ -253,6 +261,7 @@ export function usePyodide() {
     pyodideError,
     isAwaitingInput,
     setIsAwaitingInput,
+    filesUpdated,
     executePython,
     sendInput,
     sendInterrupt,
