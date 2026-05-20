@@ -22,7 +22,7 @@ const pendingPromises = new Map<
 >();
 
 const CONTROL_BYTE_LENGTH = 8;
-const SHARED_MEM_SIZE = 10 * 1024; // 10 KB
+const SHARED_MEM_SIZE = 256 * 1024; // 256 KB
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
